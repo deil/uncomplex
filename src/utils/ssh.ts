@@ -50,9 +50,7 @@ export class SSHClient {
     const args: string[] = [];
     const ssh = this.config.ssh;
 
-    if (ssh?.config === false) {
-      args.push("-F /dev/null");
-    } else if (typeof ssh?.config === "string") {
+    if (ssh?.config) {
       args.push(`-F ${expandPath(ssh.config)}`);
     }
 

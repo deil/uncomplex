@@ -43,11 +43,9 @@ export async function initCommand(): Promise<void> {
     },
     { type: "input", name: "user", message: "SSH user:", default: "root" },
     { type: "input", name: "baseFolder", message: "Remote base folder:", default: "/var/www" },
-    { type: "input", name: "sshConfig", message: "SSH config path (empty=default, false=disable):", default: "" },
+    { type: "input", name: "sshConfig", message: "SSH config path:", default: "~/.ssh/config" },
     { type: "input", name: "distFolder", message: "Local dist folder:", default: "./dist" },
   ]);
-
-  const sshConfig = answers.sshConfig === "false" ? false : answers.sshConfig || undefined;
 
   const config: Config = {
     app: answers.app,
@@ -56,7 +54,7 @@ export async function initCommand(): Promise<void> {
     ssh: {
       user: answers.user,
       baseFolder: answers.baseFolder,
-      ...(sshConfig !== undefined && { config: sshConfig }),
+      config: answers.sshConfig,
     },
   };
 
