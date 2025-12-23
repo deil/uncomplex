@@ -26,9 +26,15 @@ Uploads dist folder to server, creates versioned directory, updates current syml
 
 ### List Versions
 ```bash
-un versions
+un versions list
 ```
 Shows deployed versions with timestamps and active version.
+
+### Rollback to Version
+```bash
+un versions rollback <version>
+```
+Rolls back to a specific deployed version by updating the current symlink.
 
 ## Features
 

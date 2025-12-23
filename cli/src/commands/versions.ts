@@ -35,3 +35,20 @@ export async function versionsCommand(): Promise<void> {
     process.exit(1);
   }
 }
+
+export async function rollbackCommand(version: string): Promise<void> {
+  const config = await loadConfig();
+  const ssh = new SSHClient(config);
+
+  const spin = spinner(`Rolling back to ${version}...`);
+  try {
+    await ssh.connect();
+    await ssh.rollback(version);
+    await ssh.disconnect();
+    spin.succeed(`Rolled back to ${version}`);
+  } catch (err) {
+    spin.fail("Rollback failed");
+    log.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+}

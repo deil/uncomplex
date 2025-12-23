@@ -86,6 +86,24 @@ export class SSHClient {
     );
   }
 
+  async rollback(versionTag: string): Promise<void> {
+    const appPath = this.getAppPath();
+
+    // Check if version exists
+    try {
+      this.exec(this.sshCmd(`test -d ${appPath}/${versionTag}`));
+    } catch {
+      throw new Error(`Version ${versionTag} does not exist`);
+    }
+
+    // Update symlink
+    this.exec(
+      this.sshCmd(
+        `cd ${appPath} && rm -f current && ln -s ${versionTag} current`,
+      ),
+    );
+  }
+
   async listVersions(): Promise<DeployedVersion[]> {
     const appPath = this.getAppPath();
 
