@@ -1,6 +1,12 @@
 import { NodeSSH } from "node-ssh";
 import { Config, DeployedVersion } from "../types.js";
 import { execSync } from "child_process";
+import { homedir } from "os";
+import { join } from "path";
+
+function expandPath(p: string): string {
+  return p.startsWith("~") ? join(homedir(), p.slice(1)) : p;
+}
 
 export class SSHClient {
   private ssh: NodeSSH;
@@ -12,11 +18,13 @@ export class SSHClient {
   }
 
   async connect(): Promise<void> {
+    const keys = this.config.ssh?.keys?.map(expandPath);
+
     await this.ssh.connect({
       host: this.config.host,
       username: this.config.user,
       port: this.config.port,
-      privateKeyPath: this.config.sshKey,
+      privateKeyPath: keys?.[0],
       agent: process.env.SSH_AUTH_SOCK,
     });
   }
@@ -29,14 +37,31 @@ export class SSHClient {
     return `${this.config.baseFolder}/${this.config.appName}`;
   }
 
+  private buildSshArgs(): string {
+    const args: string[] = [];
+    const ssh = this.config.ssh;
+
+    if (ssh?.config === false) {
+      args.push("-F /dev/null");
+    }
+
+    if (ssh?.keys?.length) {
+      for (const key of ssh.keys) {
+        args.push(`-i ${expandPath(key)}`);
+      }
+    }
+
+    return args.length ? `-e "ssh ${args.join(" ")}"` : "-e ssh";
+  }
+
   async deploy(versionTag: string): Promise<void> {
     const appPath = this.getAppPath();
     const versionPath = `${appPath}/${versionTag}`;
 
     await this.ssh.execCommand(`mkdir -p ${versionPath}`);
 
-    const sshOpt = this.config.sshKey ? `-e "ssh -i ${this.config.sshKey}"` : "-e ssh";
-    const rsyncCmd = `rsync -avz --delete ${sshOpt} ${this.config.distFolder}/ ${this.config.user}@${this.config.host}:${versionPath}/`;
+    const sshArgs = this.buildSshArgs();
+    const rsyncCmd = `rsync -avz --delete ${sshArgs} ${this.config.distFolder}/ ${this.config.user}@${this.config.host}:${versionPath}/`;
     execSync(rsyncCmd, { stdio: "inherit" });
 
     await this.ssh.execCommand(
