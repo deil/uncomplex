@@ -1,0 +1,8 @@
+{
+  "appName": "photo-session-app",
+  "baseFolder": "/srv/shutter/web-apps",
+  "host": "eu01.theshutter.app",
+  "user": "anton",
+  "port": 22,
+  "distFolder": "/Users/anton/projects/shutter-studio/web/photo-session-app/dist/photo-session-app/browser"
+}
