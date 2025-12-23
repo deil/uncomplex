@@ -6,7 +6,7 @@ export interface Config {
     user?: string;
     port?: number;
     keys?: string[];
-    config?: boolean;
+    config?: boolean | string;
     baseFolder?: string;
   };
 }

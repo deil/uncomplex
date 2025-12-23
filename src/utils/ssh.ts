@@ -52,6 +52,8 @@ export class SSHClient {
 
     if (ssh?.config === false) {
       args.push("-F /dev/null");
+    } else if (typeof ssh?.config === "string") {
+      args.push(`-F ${expandPath(ssh.config)}`);
     }
 
     if (ssh?.keys?.length) {
