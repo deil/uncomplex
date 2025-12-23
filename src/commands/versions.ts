@@ -21,8 +21,11 @@ export async function versionsCommand(): Promise<void> {
 
     console.log(`\nDeployed versions on ${config.server}:\n`);
     for (const v of versions) {
-      const marker = v.isCurrent ? chalk.green(" ← current") : "";
-      console.log(`  ${v.name}${marker}`);
+      if (v.isCurrent) {
+        console.log(`  ${chalk.green(v.name)} ← current`);
+      } else {
+        console.log(`  ${v.name}`);
+      }
     }
     console.log();
   } catch (err) {
