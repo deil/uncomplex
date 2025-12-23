@@ -20,7 +20,7 @@ program
   .action(deployCommand);
 
 program
-  .command("versions")
+  .command("versions:list")
   .description("List deployed versions")
   .action(versionsCommand);
 
