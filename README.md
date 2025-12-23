@@ -36,7 +36,6 @@ Shows deployed versions with timestamps and active version.
 - Symlink-based rollbacks
 - SSH key/config support
 - Custom ports and users
-- Integrated with Beads for issue tracking
 
 ## Configuration
 
