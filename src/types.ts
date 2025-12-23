@@ -4,6 +4,7 @@ export interface Config {
   host: string;
   user: string;
   port: number;
+  sshKey?: string;
   distFolder: string;
 }
 

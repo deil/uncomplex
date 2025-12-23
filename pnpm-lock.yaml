@@ -23,9 +23,6 @@ importers:
       ora:
         specifier: ^9.0.0
         version: 9.0.0
-      ssh-config:
-        specifier: ^5.0.4
-        version: 5.0.4
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.3.10
@@ -379,9 +376,6 @@ packages:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
 
-  ssh-config@5.0.4:
-    resolution: {integrity: sha512-nCCJTY30Alhm8CWhhN8Yr1YAx2WOrDBLMMh7JYGrzCj3qssTPV+v10hYimd+8wJJeV10VrN8lFumawAEfEwjNA==}
-
   ssh2@1.17.0:
     resolution: {integrity: sha512-wPldCk3asibAjQ/kziWQQt1Wh3PgDFpC0XpwclzKcdT1vql6KeYxf5LIt4nlFkUeR8WuphYMKqUA56X4rjbfgQ==}
     engines: {node: '>=10.16.0'}
@@ -719,8 +713,6 @@ snapshots:
   shell-escape@0.2.0: {}
 
   signal-exit@4.1.0: {}
-
-  ssh-config@5.0.4: {}
 
   ssh2@1.17.0:
     dependencies:

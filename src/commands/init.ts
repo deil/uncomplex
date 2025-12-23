@@ -40,6 +40,7 @@ export async function initCommand(): Promise<void> {
     },
     { type: "input", name: "user", message: "SSH user:", default: "deploy" },
     { type: "number", name: "port", message: "SSH port:", default: 22 },
+    { type: "input", name: "sshKey", message: "SSH key path (optional):" },
     {
       type: "input",
       name: "distFolder",
