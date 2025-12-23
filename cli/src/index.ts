@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import { initCommand } from "./commands/init.js";
 import { deployCommand } from "./commands/deploy.js";
+import { initCommand } from "./commands/init.js";
 import { versionsCommand } from "./commands/versions.js";
 
 program

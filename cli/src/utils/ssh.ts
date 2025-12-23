@@ -1,7 +1,7 @@
-import { Config, DeployedVersion } from "../types.js";
-import { execSync } from "child_process";
-import { homedir } from "os";
-import { join } from "path";
+import { execSync } from "node:child_process";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import type { Config, DeployedVersion } from "../types.js";
 
 function expandPath(p: string): string {
   return p.startsWith("~") ? join(homedir(), p.slice(1)) : p;
@@ -72,12 +72,18 @@ export class SSHClient {
 
     // rsync files
     const sshArgs = this.buildSshArgs();
-    const rsyncSsh = sshArgs.length ? `-e "ssh ${sshArgs.join(" ")}"` : "-e ssh";
+    const rsyncSsh = sshArgs.length
+      ? `-e "ssh ${sshArgs.join(" ")}"`
+      : "-e ssh";
     const rsyncCmd = `rsync -avz --delete ${rsyncSsh} ${this.config.distFolder}/ ${this.user}@${this.config.server}:${versionPath}/`;
     execSync(rsyncCmd, { stdio: "inherit" });
 
     // Update symlink
-    this.exec(this.sshCmd(`cd ${appPath} && rm -f current && ln -s ${versionTag} current`));
+    this.exec(
+      this.sshCmd(
+        `cd ${appPath} && rm -f current && ln -s ${versionTag} current`,
+      ),
+    );
   }
 
   async listVersions(): Promise<DeployedVersion[]> {
@@ -96,7 +102,9 @@ export class SSHClient {
     try {
       // Single SSH call: get all folders with timestamps (Linux stat)
       const output = this.exec(
-        this.sshCmd(`find ${appPath} -maxdepth 1 -type d ! -name current ! -path ${appPath} -printf '%T@ %f\\n' | sort -rn`),
+        this.sshCmd(
+          `find ${appPath} -maxdepth 1 -type d ! -name current ! -path ${appPath} -printf '%T@ %f\\n' | sort -rn`,
+        ),
       );
       versions = output
         .split("\n")

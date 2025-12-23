@@ -1,5 +1,5 @@
-import { execSync } from "child_process";
-import { readFile } from "fs/promises";
+import { execSync } from "node:child_process";
+import { readFile } from "node:fs/promises";
 
 export function getGitSha(): string {
   try {

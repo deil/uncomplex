@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
-import { saveConfig, configExists } from "../utils/config.js";
+import type { Config } from "../types.js";
+import { configExists, saveConfig } from "../utils/config.js";
 import { log } from "../utils/logger.js";
-import { Config } from "../types.js";
 
 interface InitAnswers {
   app: string;
@@ -42,9 +42,24 @@ export async function initCommand(): Promise<void> {
       validate: (v) => !!v || "Required",
     },
     { type: "input", name: "user", message: "SSH user:", default: "root" },
-    { type: "input", name: "baseFolder", message: "Remote base folder:", default: "/var/www" },
-    { type: "input", name: "sshConfig", message: "SSH config path:", default: "~/.ssh/config" },
-    { type: "input", name: "distFolder", message: "Local dist folder:", default: "./dist" },
+    {
+      type: "input",
+      name: "baseFolder",
+      message: "Remote base folder:",
+      default: "/var/www",
+    },
+    {
+      type: "input",
+      name: "sshConfig",
+      message: "SSH config path:",
+      default: "~/.ssh/config",
+    },
+    {
+      type: "input",
+      name: "distFolder",
+      message: "Local dist folder:",
+      default: "./dist",
+    },
   ]);
 
   const config: Config = {

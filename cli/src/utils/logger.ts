@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import ora, { Ora } from "ora";
+import ora, { type Ora } from "ora";
 
 export const log = {
   info: (msg: string) => console.log(chalk.blue("ℹ"), msg),

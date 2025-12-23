@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { loadConfig } from "../utils/config.js";
-import { SSHClient } from "../utils/ssh.js";
 import { log, spinner } from "../utils/logger.js";
+import { SSHClient } from "../utils/ssh.js";
 
 export async function versionsCommand(): Promise<void> {
   const config = await loadConfig();

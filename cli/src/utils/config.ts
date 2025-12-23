@@ -1,6 +1,6 @@
-import { readFile, writeFile } from "fs/promises";
-import { existsSync } from "fs";
-import { Config } from "../types.js";
+import { existsSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
+import type { Config } from "../types.js";
 
 const CONFIG_FILE = "un.config.json";
 

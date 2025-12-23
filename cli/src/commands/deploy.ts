@@ -1,7 +1,7 @@
 import { loadConfig } from "../utils/config.js";
 import { getVersionTag } from "../utils/git.js";
-import { SSHClient } from "../utils/ssh.js";
 import { log, spinner } from "../utils/logger.js";
+import { SSHClient } from "../utils/ssh.js";
 
 export async function deployCommand(): Promise<void> {
   const config = await loadConfig();
