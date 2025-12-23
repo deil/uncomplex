@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import inquirer from "inquirer";
 import type { Config } from "../types.js";
 import { configExists, saveConfig } from "../utils/config.js";
@@ -62,17 +63,25 @@ export async function initCommand(): Promise<void> {
     },
   ]);
 
+  const uid = randomUUID();
+
   const config: Config = {
-    app: answers.app,
-    server: answers.server,
-    distFolder: answers.distFolder,
-    ssh: {
-      user: answers.user,
+    server: {
+      host: answers.server,
       baseFolder: answers.baseFolder,
-      config: answers.sshConfig,
+      ssh: {
+        user: answers.user,
+        config: answers.sshConfig,
+      },
+    },
+    app: {
+      name: answers.app,
+      distFolder: answers.distFolder,
+      uid,
     },
   };
 
   await saveConfig(config);
   log.success("Created un.config.json");
+  log.info(`App UID: ${uid}`);
 }

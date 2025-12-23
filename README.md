@@ -18,6 +18,18 @@ un init
 ```
 Interactive setup for server, SSH, and paths.
 
+### Show Configuration
+```bash
+un config
+```
+Displays your config.
+
+### Validate Configuration
+```bash
+un validate
+```
+Checks SSH config file, server connection, base folder existence, and local dist folder.
+
 ### Deploy
 ```bash
 un deploy
@@ -35,6 +47,12 @@ Shows deployed versions with timestamps and active version.
 un versions rollback <version>
 ```
 Rolls back to a specific deployed version by updating the current symlink.
+
+### List Public Ingresses
+```bash
+un ingress list
+```
+Lists public ingresses from sites starting with "un__", removes prefix, reverses domains, and sorts alphabetically.
 
 ## Features
 

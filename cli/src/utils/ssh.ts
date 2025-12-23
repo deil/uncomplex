@@ -15,12 +15,12 @@ export class SSHClient {
   }
 
   private get user(): string {
-    return this.config.ssh?.user || "root";
+    return this.config.server.ssh?.user || "root";
   }
 
   private buildSshArgs(): string[] {
     const args: string[] = [];
-    const ssh = this.config.ssh;
+    const ssh = this.config.server.ssh;
 
     if (ssh?.port) {
       args.push("-p", String(ssh.port));
@@ -41,7 +41,7 @@ export class SSHClient {
 
   private sshCmd(cmd: string): string {
     const args = this.buildSshArgs();
-    const target = `${this.user}@${this.config.server}`;
+    const target = `${this.user}@${this.config.server.host}`;
     return `ssh ${args.join(" ")} ${target} "${cmd.replace(/"/g, '\\"')}"`;
   }
 
@@ -59,8 +59,8 @@ export class SSHClient {
   }
 
   private getAppPath(): string {
-    const base = this.config.ssh?.baseFolder || "/var/www";
-    return `${base}/${this.config.app}`;
+    const base = this.config.server.baseFolder || "/var/www";
+    return `${base}/${this.config.app.name}`;
   }
 
   async deploy(versionTag: string): Promise<void> {
@@ -75,7 +75,7 @@ export class SSHClient {
     const rsyncSsh = sshArgs.length
       ? `-e "ssh ${sshArgs.join(" ")}"`
       : "-e ssh";
-    const rsyncCmd = `rsync -avz --delete ${rsyncSsh} ${this.config.distFolder}/ ${this.user}@${this.config.server}:${versionPath}/`;
+    const rsyncCmd = `rsync -avz --delete ${rsyncSsh} ${this.config.app.distFolder}/ ${this.user}@${this.config.server.host}:${versionPath}/`;
     execSync(rsyncCmd, { stdio: "inherit" });
 
     // Update symlink
@@ -142,5 +142,28 @@ export class SSHClient {
     }
 
     return versions;
+  }
+
+  async listNginxSites(): Promise<string[]> {
+    const output = this.exec(this.sshCmd("ls /etc/nginx/sites-enabled"));
+    return output.split("\n").filter((line) => line.trim() !== "");
+  }
+
+  async reverseIp(ip: string): Promise<string> {
+    const output = this.exec(this.sshCmd(`host ${ip}`));
+    const match = output.match(/domain name pointer (.+)/);
+    if (match) {
+      return match[1].trim();
+    }
+    throw new Error("No hostname found");
+  }
+
+  async checkDirectoryExists(path: string): Promise<boolean> {
+    try {
+      this.exec(this.sshCmd(`test -d ${path}`));
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

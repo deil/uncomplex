@@ -19,7 +19,7 @@ export async function versionsCommand(): Promise<void> {
       return;
     }
 
-    console.log(`\nDeployed versions on ${config.server}:\n`);
+    console.log(`\nDeployed versions on ${config.server.host}:\n`);
     for (const v of versions) {
       const date = v.deployedAt.toLocaleString();
       if (v.isCurrent) {

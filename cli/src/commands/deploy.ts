@@ -7,7 +7,7 @@ export async function deployCommand(): Promise<void> {
   const config = await loadConfig();
   const versionTag = await getVersionTag();
 
-  log.info(`Deploying ${config.app} version ${versionTag}`);
+  log.info(`Deploying ${config.app.name} version ${versionTag}`);
 
   const ssh = new SSHClient(config);
 
@@ -22,7 +22,7 @@ export async function deployCommand(): Promise<void> {
 
     await ssh.disconnect();
 
-    log.success(`Deployed ${versionTag} to ${config.server}`);
+    log.success(`Deployed ${versionTag} to ${config.server.host}`);
   } catch (err) {
     spin.fail("Deployment failed");
     log.error(err instanceof Error ? err.message : String(err));

@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import { program } from "commander";
+import { configCommand } from "./commands/config.js";
 import { deployCommand } from "./commands/deploy.js";
+import { ingressCommand } from "./commands/ingress.js";
 import { initCommand } from "./commands/init.js";
 import { rollbackCommand, versionsCommand } from "./commands/versions.js";
+import { validateCommand } from "./commands/validate.js";
 
 program
   .name("un")
@@ -13,6 +16,16 @@ program
   .command("init")
   .description("Initialize un.config.json")
   .action(initCommand);
+
+program
+  .command("config")
+  .description("Displays your config")
+  .action(configCommand);
+
+program
+  .command("validate")
+  .description("Validate configuration")
+  .action(validateCommand);
 
 program
   .command("deploy")
@@ -37,5 +50,18 @@ versionsCmd
   .command("rollback <version>")
   .description("Rollback to a specific version")
   .action(rollbackCommand);
+
+const ingressCmd = program
+  .command("ingress")
+  .description("Manage nginx ingress")
+  .action(() => {
+    console.log("Commands:");
+    console.log("  list  List nginx sites enabled");
+  });
+
+ingressCmd
+  .command("list")
+  .description("List nginx sites enabled")
+  .action(ingressCommand);
 
 program.parse();
