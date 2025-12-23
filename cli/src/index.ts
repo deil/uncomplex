@@ -17,12 +17,17 @@ program
   .description("Initialize un.config.json")
   .action(initCommand);
 
-program
+const configCmd = program
   .command("config")
   .description("Displays your config")
   .action(configCommand);
 
-program
+configCmd
+  .command("show")
+  .description("Displays your config")
+  .action(configCommand);
+
+configCmd
   .command("validate")
   .description("Validate configuration")
   .action(validateCommand);
