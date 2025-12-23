@@ -1,14 +1,14 @@
 export interface Config {
   appName: string;
   baseFolder: string;
-  host: string;
-  user: string;
-  port: number;
+  server: string;
+  distFolder: string;
   ssh?: {
+    user?: string;
+    port?: number;
     keys?: string[];
     config?: boolean;
   };
-  distFolder: string;
 }
 
 export interface DeployedVersion {

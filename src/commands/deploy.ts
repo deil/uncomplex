@@ -22,7 +22,7 @@ export async function deployCommand(): Promise<void> {
 
     await ssh.disconnect();
 
-    log.success(`Deployed ${versionTag} to ${config.host}`);
+    log.success(`Deployed ${versionTag} to ${config.server}`);
   } catch (err) {
     spin.fail("Deployment failed");
     log.error(err instanceof Error ? err.message : String(err));

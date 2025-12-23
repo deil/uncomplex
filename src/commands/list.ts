@@ -19,7 +19,7 @@ export async function listCommand(): Promise<void> {
       return;
     }
 
-    console.log(`\nDeployed versions on ${config.host}:\n`);
+    console.log(`\nDeployed versions on ${config.server}:\n`);
     for (const v of versions) {
       const marker = v.isCurrent ? chalk.green(" ← current") : "";
       console.log(`  ${v.name}${marker}`);

@@ -17,13 +17,21 @@ export class SSHClient {
     this.config = config;
   }
 
+  private get user(): string {
+    return this.config.ssh?.user || "root";
+  }
+
+  private get port(): number {
+    return this.config.ssh?.port || 22;
+  }
+
   async connect(): Promise<void> {
     const keys = this.config.ssh?.keys?.map(expandPath);
 
     await this.ssh.connect({
-      host: this.config.host,
-      username: this.config.user,
-      port: this.config.port,
+      host: this.config.server,
+      username: this.user,
+      port: this.port,
       privateKeyPath: keys?.[0],
       agent: process.env.SSH_AUTH_SOCK,
     });
@@ -61,7 +69,7 @@ export class SSHClient {
     await this.ssh.execCommand(`mkdir -p ${versionPath}`);
 
     const sshArgs = this.buildSshArgs();
-    const rsyncCmd = `rsync -avz --delete ${sshArgs} ${this.config.distFolder}/ ${this.config.user}@${this.config.host}:${versionPath}/`;
+    const rsyncCmd = `rsync -avz --delete ${sshArgs} ${this.config.distFolder}/ ${this.user}@${this.config.server}:${versionPath}/`;
     execSync(rsyncCmd, { stdio: "inherit" });
 
     await this.ssh.execCommand(
