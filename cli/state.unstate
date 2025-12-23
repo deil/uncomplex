@@ -1,0 +1,15 @@
+{
+  "ingress": [
+    {
+      "uid": "97be1d1d-124a-4f6a-85a6-d42381598f19",
+      "hostname": "beta.theshutter.app",
+      "name": "beta.theshutter.app",
+      "routes": [
+        {
+          "path": "/sessions",
+          "app": "37359d6c-048d-4d56-a756-efb1e69122d6"
+        }
+      ]
+    }
+  ]
+}
