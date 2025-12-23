@@ -1,4 +1,3 @@
-import { NodeSSH } from "node-ssh";
 import { Config, DeployedVersion } from "../types.js";
 import { execSync } from "child_process";
 import { homedir } from "os";
@@ -9,11 +8,9 @@ function expandPath(p: string): string {
 }
 
 export class SSHClient {
-  private ssh: NodeSSH;
   private config: Config;
 
   constructor(config: Config) {
-    this.ssh = new NodeSSH();
     this.config = config;
   }
 
@@ -21,24 +18,44 @@ export class SSHClient {
     return this.config.ssh?.user || "root";
   }
 
-  private get port(): number {
-    return this.config.ssh?.port || 22;
+  private buildSshArgs(): string[] {
+    const args: string[] = [];
+    const ssh = this.config.ssh;
+
+    if (ssh?.port) {
+      args.push("-p", String(ssh.port));
+    }
+
+    if (ssh?.config) {
+      args.push("-F", expandPath(ssh.config));
+    }
+
+    if (ssh?.keys?.length) {
+      for (const key of ssh.keys) {
+        args.push("-i", expandPath(key));
+      }
+    }
+
+    return args;
+  }
+
+  private sshCmd(cmd: string): string {
+    const args = this.buildSshArgs();
+    const target = `${this.user}@${this.config.server}`;
+    return `ssh ${args.join(" ")} ${target} "${cmd.replace(/"/g, '\\"')}"`;
+  }
+
+  private exec(cmd: string): string {
+    return execSync(cmd, { encoding: "utf-8" }).trim();
   }
 
   async connect(): Promise<void> {
-    const keys = this.config.ssh?.keys?.map(expandPath);
-
-    await this.ssh.connect({
-      host: this.config.server,
-      username: this.user,
-      port: this.port,
-      privateKeyPath: keys?.[0],
-      agent: process.env.SSH_AUTH_SOCK,
-    });
+    // Test connection
+    this.exec(this.sshCmd("echo ok"));
   }
 
   async disconnect(): Promise<void> {
-    this.ssh.dispose();
+    // No-op for native ssh
   }
 
   private getAppPath(): string {
@@ -46,50 +63,40 @@ export class SSHClient {
     return `${base}/${this.config.app}`;
   }
 
-  private buildSshArgs(): string {
-    const args: string[] = [];
-    const ssh = this.config.ssh;
-
-    if (ssh?.config) {
-      args.push(`-F ${expandPath(ssh.config)}`);
-    }
-
-    if (ssh?.keys?.length) {
-      for (const key of ssh.keys) {
-        args.push(`-i ${expandPath(key)}`);
-      }
-    }
-
-    return args.length ? `-e "ssh ${args.join(" ")}"` : "-e ssh";
-  }
-
   async deploy(versionTag: string): Promise<void> {
     const appPath = this.getAppPath();
     const versionPath = `${appPath}/${versionTag}`;
 
-    await this.ssh.execCommand(`mkdir -p ${versionPath}`);
+    // Create version directory
+    this.exec(this.sshCmd(`mkdir -p ${versionPath}`));
 
+    // rsync files
     const sshArgs = this.buildSshArgs();
-    const rsyncCmd = `rsync -avz --delete ${sshArgs} ${this.config.distFolder}/ ${this.user}@${this.config.server}:${versionPath}/`;
+    const rsyncSsh = sshArgs.length ? `-e "ssh ${sshArgs.join(" ")}"` : "-e ssh";
+    const rsyncCmd = `rsync -avz --delete ${rsyncSsh} ${this.config.distFolder}/ ${this.user}@${this.config.server}:${versionPath}/`;
     execSync(rsyncCmd, { stdio: "inherit" });
 
-    await this.ssh.execCommand(
-      `cd ${appPath} && rm -f current && ln -s ${versionTag} current`,
-    );
+    // Update symlink
+    this.exec(this.sshCmd(`cd ${appPath} && rm -f current && ln -s ${versionTag} current`));
   }
 
   async listVersions(): Promise<DeployedVersion[]> {
     const appPath = this.getAppPath();
 
-    const currentResult = await this.ssh.execCommand(
-      `readlink ${appPath}/current 2>/dev/null || echo ""`,
-    );
-    const currentVersion = currentResult.stdout.trim();
+    let currentVersion = "";
+    try {
+      currentVersion = this.exec(this.sshCmd(`readlink ${appPath}/current`));
+    } catch {
+      // No current symlink
+    }
 
-    const listResult = await this.ssh.execCommand(
-      `ls -1 ${appPath} 2>/dev/null | grep -v current || echo ""`,
-    );
-    const versions = listResult.stdout.trim().split("\n").filter(Boolean);
+    let versions: string[] = [];
+    try {
+      const output = this.exec(this.sshCmd(`ls -1 ${appPath} | grep -v current`));
+      versions = output.split("\n").filter(Boolean);
+    } catch {
+      // No versions
+    }
 
     return versions.map((name) => ({
       name,
