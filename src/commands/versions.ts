@@ -21,10 +21,11 @@ export async function versionsCommand(): Promise<void> {
 
     console.log(`\nDeployed versions on ${config.server}:\n`);
     for (const v of versions) {
+      const date = v.deployedAt.toLocaleString();
       if (v.isCurrent) {
-        console.log(`  ${chalk.green(v.name)} ← current`);
+        console.log(`  ${chalk.green(v.name)}  ${chalk.dim(date)}  ← current`);
       } else {
-        console.log(`  ${v.name}`);
+        console.log(`  ${v.name}  ${chalk.dim(date)}`);
       }
     }
     console.log();

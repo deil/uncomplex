@@ -85,22 +85,36 @@ export class SSHClient {
 
     let currentVersion = "";
     try {
-      currentVersion = this.exec(this.sshCmd(`readlink ${appPath}/current`));
+      const link = this.exec(this.sshCmd(`readlink ${appPath}/current`));
+      // readlink may return relative or absolute path
+      currentVersion = link.split("/").pop() || link;
     } catch {
       // No current symlink
     }
 
-    let versions: string[] = [];
+    let versions: DeployedVersion[] = [];
     try {
-      const output = this.exec(this.sshCmd(`ls -1 ${appPath} | grep -v current`));
-      versions = output.split("\n").filter(Boolean);
+      // Single SSH call: get all folders with timestamps (Linux stat)
+      const output = this.exec(
+        this.sshCmd(`find ${appPath} -maxdepth 1 -type d ! -name current ! -path ${appPath} -printf '%T@ %f\\n' | sort -rn`),
+      );
+      versions = output
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => {
+          const spaceIdx = line.indexOf(" ");
+          const ts = parseInt(line.slice(0, spaceIdx), 10) * 1000;
+          const name = line.slice(spaceIdx + 1);
+          return {
+            name,
+            isCurrent: name === currentVersion,
+            deployedAt: new Date(ts),
+          };
+        });
     } catch {
       // No versions
     }
 
-    return versions.map((name) => ({
-      name,
-      isCurrent: name === currentVersion,
-    }));
+    return versions;
   }
 }

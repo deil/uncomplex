@@ -14,4 +14,5 @@ export interface Config {
 export interface DeployedVersion {
   name: string;
   isCurrent: boolean;
+  deployedAt: Date;
 }
