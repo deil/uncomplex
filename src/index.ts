@@ -2,7 +2,7 @@
 import { program } from "commander";
 import { initCommand } from "./commands/init.js";
 import { deployCommand } from "./commands/deploy.js";
-import { listCommand } from "./commands/list.js";
+import { versionsCommand } from "./commands/versions.js";
 
 program
   .name("un")
@@ -20,8 +20,8 @@ program
   .action(deployCommand);
 
 program
-  .command("list")
+  .command("versions")
   .description("List deployed versions")
-  .action(listCommand);
+  .action(versionsCommand);
 
 program.parse();

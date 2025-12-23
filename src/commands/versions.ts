@@ -3,7 +3,7 @@ import { loadConfig } from "../utils/config.js";
 import { SSHClient } from "../utils/ssh.js";
 import { log, spinner } from "../utils/logger.js";
 
-export async function listCommand(): Promise<void> {
+export async function versionsCommand(): Promise<void> {
   const config = await loadConfig();
   const ssh = new SSHClient(config);
 
