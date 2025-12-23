@@ -1,6 +1,5 @@
 export interface Config {
-  appName: string;
-  baseFolder: string;
+  app: string;
   server: string;
   distFolder: string;
   ssh?: {
@@ -8,6 +7,7 @@ export interface Config {
     port?: number;
     keys?: string[];
     config?: boolean;
+    baseFolder?: string;
   };
 }
 

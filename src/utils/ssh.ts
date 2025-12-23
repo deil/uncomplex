@@ -42,7 +42,8 @@ export class SSHClient {
   }
 
   private getAppPath(): string {
-    return `${this.config.baseFolder}/${this.config.appName}`;
+    const base = this.config.ssh?.baseFolder || "/var/www";
+    return `${base}/${this.config.app}`;
   }
 
   private buildSshArgs(): string {

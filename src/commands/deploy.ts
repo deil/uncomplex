@@ -7,7 +7,7 @@ export async function deployCommand(): Promise<void> {
   const config = await loadConfig();
   const versionTag = await getVersionTag();
 
-  log.info(`Deploying ${config.appName} version ${versionTag}`);
+  log.info(`Deploying ${config.app} version ${versionTag}`);
 
   const ssh = new SSHClient(config);
 

@@ -4,8 +4,7 @@ import { log } from "../utils/logger.js";
 import { Config } from "../types.js";
 
 interface InitAnswers {
-  appName: string;
-  baseFolder: string;
+  app: string;
   server: string;
   user: string;
   distFolder: string;
@@ -30,15 +29,9 @@ export async function initCommand(): Promise<void> {
   const answers = await inquirer.prompt<InitAnswers>([
     {
       type: "input",
-      name: "appName",
+      name: "app",
       message: "App name:",
       validate: (v) => !!v || "Required",
-    },
-    {
-      type: "input",
-      name: "baseFolder",
-      message: "Remote base folder:",
-      default: "/var/www",
     },
     {
       type: "input",
@@ -56,8 +49,7 @@ export async function initCommand(): Promise<void> {
   ]);
 
   const config: Config = {
-    appName: answers.appName,
-    baseFolder: answers.baseFolder,
+    app: answers.app,
     server: answers.server,
     distFolder: answers.distFolder,
     ssh: {
