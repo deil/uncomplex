@@ -67,13 +67,39 @@ un config validate
 ```
 Checks SSH config file presence, server connection, base folder existence, and local dist folder.
 
+## Global Options
+
+```bash
+un --config <path> <command>
+```
+Use custom config file instead of `./un.config.json`.
+
 ## Features
 
 - Git SHA-based versioning
 - Symlink-based rollbacks
 - SSH key/config support
-- Custom ports and users
+- Pluggable backends (deployment, state)
 
 ## Configuration
 
-Creates `un.config.json` with app name, server, SSH details, base folder, dist folder.
+Creates `un.config.json`:
+
+```json
+{
+  "backends": {
+    "deployment": { "type": "ssh" },
+    "state": { "type": "local", "path": "state.unstate" }
+  },
+  "server": {
+    "host": "example.com",
+    "baseFolder": "/var/www",
+    "ssh": { "user": "root", "config": "~/.ssh/config" }
+  },
+  "app": {
+    "name": "my-app",
+    "distFolder": "./dist",
+    "uid": "..."
+  }
+}
+```
