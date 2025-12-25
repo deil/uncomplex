@@ -1,15 +1,15 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import chalk from "chalk";
+import { createDeploymentBackend } from "../backends/deployment/index.js";
 import { loadConfig } from "../utils/config.js";
-import { SSHClient } from "../utils/ssh.js";
 
-function expandPath(p: string): string {
-  return p.startsWith("~") ? homedir() + p.slice(1) : p;
-}
+const expandPath = (p: string): string =>
+  p.startsWith("~") ? homedir() + p.slice(1) : p;
 
-export async function validateCommand(): Promise<void> {
+export const validateCommand = async (): Promise<void> => {
   const config = await loadConfig();
+  const backend = createDeploymentBackend(config);
 
   let allValid = true;
 
@@ -28,11 +28,10 @@ export async function validateCommand(): Promise<void> {
   }
 
   // 2. Attempt SSH connection
-  const ssh = new SSHClient(config);
   try {
-    await ssh.connect();
+    await backend.connect();
     console.log(`${chalk.green("✓")} SSH connection: ${config.server.host}`);
-    await ssh.disconnect();
+    await backend.disconnect();
   } catch {
     console.log(`${chalk.red("✗")} SSH connection: ${config.server.host}`);
     allValid = false;
@@ -41,9 +40,9 @@ export async function validateCommand(): Promise<void> {
   // 3. Check base folder on server
   const baseFolder = config.server.baseFolder;
   try {
-    await ssh.connect();
-    const exists = await ssh.checkDirectoryExists(baseFolder);
-    await ssh.disconnect();
+    await backend.connect();
+    const exists = await backend.checkDirectoryExists(baseFolder);
+    await backend.disconnect();
     if (exists) {
       console.log(`${chalk.green("✓")} Base folder: ${baseFolder}`);
     } else {
@@ -66,4 +65,4 @@ export async function validateCommand(): Promise<void> {
   if (!allValid) {
     process.exit(1);
   }
-}
+};

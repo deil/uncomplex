@@ -6,15 +6,25 @@ import {
   ingressAddCommand,
   ingressCommand,
   ingressImportCommand,
+  ingressRouteCommand,
+  ingressShowCommand,
 } from "./commands/ingress.js";
 import { initCommand } from "./commands/init.js";
 import { rollbackCommand, versionsCommand } from "./commands/versions.js";
 import { validateCommand } from "./commands/validate.js";
+import { setConfigPath } from "./utils/config.js";
 
 program
   .name("un")
   .description("Deploy Angular apps to remote servers")
-  .version("0.0.1");
+  .version("0.0.1")
+  .option("-c, --config <path>", "Path to config file (default: un.config.json)")
+  .hook("preAction", () => {
+    const opts = program.opts();
+    if (opts.config) {
+      setConfigPath(opts.config);
+    }
+  });
 
 program
   .command("init")
@@ -78,8 +88,8 @@ const ingressCmd = program
   .description("Manage nginx ingress")
   .action(() => {
     console.log("Commands:");
-    console.log("  list      List nginx sites enabled");
-    console.log("  route     Manage routes");
+    console.log("  list  List nginx sites enabled");
+    console.log("  show  Show ingress details and routes");
   });
 
 ingressCmd
@@ -87,11 +97,24 @@ ingressCmd
   .description("List nginx sites enabled")
   .action(ingressCommand);
 
-const routeCmd = ingressCmd.command("route").description("Manage routes");
+ingressCmd
+  .command("show <ingress-uid>")
+  .description("Show ingress details and routes")
+  .action(ingressShowCommand);
+
+const routeCmd = ingressCmd
+  .command("route")
+  .description("Manage routes")
+  .action(ingressRouteCommand);
 
 routeCmd
   .command("add <ingress-uid> <path> <app>")
   .description("Add route to ingress")
   .action(ingressAddCommand);
+
+routeCmd
+  .command("list")
+  .description("List routes by ingress")
+  .action(ingressRouteCommand);
 
 program.parse();

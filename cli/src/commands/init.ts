@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import inquirer from "inquirer";
 import type { Config } from "../types.js";
-import { configExists, saveConfig } from "../utils/config.js";
+import { configExists, getConfigPath, saveConfig } from "../utils/config.js";
 import { log } from "../utils/logger.js";
 
 interface InitAnswers {
@@ -19,7 +19,7 @@ export async function initCommand(): Promise<void> {
       {
         type: "confirm",
         name: "overwrite",
-        message: "un.config.json already exists. Overwrite?",
+        message: `${getConfigPath()} already exists. Overwrite?`,
         default: false,
       },
     ]);
@@ -66,6 +66,10 @@ export async function initCommand(): Promise<void> {
   const uid = randomUUID();
 
   const config: Config = {
+    backends: {
+      deployment: { type: "ssh" },
+      state: { type: "local", path: "state.unstate" },
+    },
     server: {
       host: answers.server,
       baseFolder: answers.baseFolder,
@@ -82,6 +86,6 @@ export async function initCommand(): Promise<void> {
   };
 
   await saveConfig(config);
-  log.success("Created un.config.json");
+  log.success(`Created ${getConfigPath()}`);
   log.info(`App UID: ${uid}`);
 }

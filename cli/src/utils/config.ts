@@ -1,11 +1,31 @@
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { z } from "zod";
 import type { Config } from "../types.js";
 
-const CONFIG_FILE = "un.config.json";
+const DEFAULT_CONFIG_FILE = "un.config.json";
+
+let configFilePath = DEFAULT_CONFIG_FILE;
+
+export const setConfigPath = (path: string): void => {
+  configFilePath = path;
+};
+
+export const getConfigPath = (): string => configFilePath;
+
+export const getConfigDir = (): string => dirname(configFilePath);
 
 const configSchema = z.object({
+  backends: z.object({
+    deployment: z.object({
+      type: z.literal("ssh"),
+    }),
+    state: z.object({
+      type: z.literal("local"),
+      path: z.string(),
+    }),
+  }),
   server: z.object({
     host: z.string(),
     baseFolder: z.string(),
@@ -26,18 +46,18 @@ const configSchema = z.object({
 });
 
 export async function loadConfig(): Promise<Config> {
-  if (!existsSync(CONFIG_FILE)) {
-    throw new Error(`Config file not found. Run 'un init' first.`);
+  if (!existsSync(configFilePath)) {
+    throw new Error(`Config file not found: ${configFilePath}`);
   }
-  const content = await readFile(CONFIG_FILE, "utf-8");
+  const content = await readFile(configFilePath, "utf-8");
   const parsed = JSON.parse(content);
   return configSchema.parse(parsed);
 }
 
 export async function saveConfig(config: Config): Promise<void> {
-  await writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
+  await writeFile(configFilePath, JSON.stringify(config, null, 2));
 }
 
 export function configExists(): boolean {
-  return existsSync(CONFIG_FILE);
+  return existsSync(configFilePath);
 }

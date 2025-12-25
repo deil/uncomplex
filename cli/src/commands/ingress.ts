@@ -1,7 +1,10 @@
-import { loadState } from "../utils/state.js";
+import { createStateBackend } from "../backends/state/index.js";
+import { getConfigDir, loadConfig } from "../utils/config.js";
 
-export async function ingressCommand(): Promise<void> {
-  const state = await loadState();
+export const ingressCommand = async (): Promise<void> => {
+  const config = await loadConfig();
+  const stateBackend = createStateBackend(config, getConfigDir());
+  const state = await stateBackend.loadState();
 
   if (state.ingress.length === 0) {
     console.log("No ingresses created yet.");
@@ -13,52 +16,96 @@ export async function ingressCommand(): Promise<void> {
     console.log(`${ingress.uid} ${ingress.name}`);
   }
   console.log();
-}
+};
 
-export async function ingressAddCommand(
+export const ingressRouteCommand = async (): Promise<void> => {
+  const config = await loadConfig();
+  const stateBackend = createStateBackend(config, getConfigDir());
+  const state = await stateBackend.loadState();
+
+  const getAppName = (appUid: string) =>
+    appUid === config.app.uid ? config.app.name : appUid;
+
+  console.log("\nRoutes by ingress:\n");
+  for (const ingress of state.ingress) {
+    console.log(`Ingress: ${ingress.name}`);
+    if (ingress.routes.length === 0) {
+      console.log("  No routes");
+    } else {
+      for (const route of ingress.routes) {
+        console.log(
+          `  ${route.path} => ${getAppName(route.app)} (${route.app})`,
+        );
+      }
+    }
+    console.log();
+  }
+};
+
+export const ingressShowCommand = async (ingressUid: string): Promise<void> => {
+  const config = await loadConfig();
+  const stateBackend = createStateBackend(config, getConfigDir());
+  const state = await stateBackend.loadState();
+  const ingress = state.ingress.find((i) => i.uid === ingressUid);
+  if (!ingress) {
+    console.log(`Ingress with UID ${ingressUid} not found.`);
+    return;
+  }
+
+  const getAppName = (appUid: string) =>
+    appUid === config.app.uid ? config.app.name : appUid;
+
+  console.log(`\nIngress: ${ingress.name} (${ingress.uid})`);
+  console.log(`Hostname: ${ingress.hostname}`);
+  console.log("Routes:");
+  if (ingress.routes.length === 0) {
+    console.log("  No routes");
+  } else {
+    for (const route of ingress.routes) {
+      console.log(`  ${route.path} => ${getAppName(route.app)} (${route.app})`);
+    }
+  }
+};
+
+export const ingressAddCommand = async (
   ingressUid: string,
   path: string,
   app: string,
-): Promise<void> {
-  const { loadConfig } = await import("../utils/config.js");
+): Promise<void> => {
+  const { randomUUID } = await import("node:crypto");
   const config = await loadConfig();
-  if (app !== config.app.uid) {
-    console.log("App UID not found.");
+  const stateBackend = createStateBackend(config, getConfigDir());
+
+  if (app !== config.app.name) {
+    console.log("App name not found.");
     process.exit(1);
   }
-  const state = await loadState();
+  const appUid = config.app.uid;
+  const state = await stateBackend.loadState();
   const ingress = state.ingress.find((i) => i.uid === ingressUid);
   if (!ingress) {
     console.log(`Ingress with UID ${ingressUid} not found.`);
     process.exit(1);
   }
-  if (ingress.routes.some((r) => r.path === path && r.app === app)) {
-    console.log(
-      `Route ${path} => ${app} already exists for ingress ${ingress.name}.`,
-    );
+  if (ingress.routes.some((r) => r.path === path && r.app === appUid)) {
+    console.log(`Route ${path} => ${app} already exists for ingress ${ingress.name}.`);
     process.exit(1);
   }
-  ingress.routes.push({ path, app });
-  const { saveState } = await import("../utils/state.js");
-  await saveState(state);
+  ingress.routes.push({ uid: randomUUID(), path, app: appUid });
+  await stateBackend.saveState(state);
   console.log(`Added route ${path} => ${app} to ingress ${ingress.name}`);
-}
+};
 
-export async function ingressImportCommand(): Promise<void> {
-  const { loadConfig } = await import("../utils/config.js");
+export const ingressImportCommand = async (): Promise<void> => {
   const { spinner, log } = await import("../utils/logger.js");
-  const { SSHClient } = await import("../utils/ssh.js");
-  const { saveState } = await import("../utils/state.js");
   const { randomUUID } = await import("node:crypto");
 
   const config = await loadConfig();
-  const ssh = new SSHClient(config);
+  const stateBackend = createStateBackend(config, getConfigDir());
 
   const spin = spinner("Fetching ingresses...");
   try {
-    await ssh.connect();
-    const sites = await ssh.listNginxSites();
-    await ssh.disconnect();
+    const sites = await stateBackend.listNginxSites();
     spin.stop();
 
     const prefixedSites = sites.filter((site) => site.startsWith("un__"));
@@ -75,7 +122,7 @@ export async function ingressImportCommand(): Promise<void> {
       })
       .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
-    await saveState({ ingress });
+    await stateBackend.saveState({ ingress });
 
     console.log(`Imported ${ingress.length} ingresses.`);
   } catch (err) {
@@ -83,4 +130,4 @@ export async function ingressImportCommand(): Promise<void> {
     log.error(err instanceof Error ? err.message : String(err));
     process.exit(1);
   }
-}
+};

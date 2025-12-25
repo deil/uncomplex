@@ -1,26 +1,26 @@
+import { createDeploymentBackend } from "../backends/deployment/index.js";
 import { loadConfig } from "../utils/config.js";
 import { getVersionTag } from "../utils/git.js";
 import { log, spinner } from "../utils/logger.js";
-import { SSHClient } from "../utils/ssh.js";
 
-export async function deployCommand(): Promise<void> {
+export const deployCommand = async (): Promise<void> => {
   const config = await loadConfig();
   const versionTag = await getVersionTag();
 
   log.info(`Deploying ${config.app.name} version ${versionTag}`);
 
-  const ssh = new SSHClient(config);
+  const backend = createDeploymentBackend(config);
 
   const spin = spinner("Connecting to server...");
   try {
-    await ssh.connect();
+    await backend.connect();
     spin.succeed("Connected");
 
     const deploySpin = spinner("Deploying files...");
-    await ssh.deploy(versionTag);
+    await backend.deploy(versionTag);
     deploySpin.succeed("Files deployed");
 
-    await ssh.disconnect();
+    await backend.disconnect();
 
     log.success(`Deployed ${versionTag} to ${config.server.host}`);
   } catch (err) {
@@ -28,4 +28,4 @@ export async function deployCommand(): Promise<void> {
     log.error(err instanceof Error ? err.message : String(err));
     process.exit(1);
   }
-}
+};

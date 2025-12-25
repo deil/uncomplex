@@ -1,4 +1,17 @@
+export interface SSHDeploymentConfig {
+  type: "ssh";
+}
+
+export interface LocalStateConfig {
+  type: "local";
+  path: string;
+}
+
 export interface Config {
+  backends: {
+    deployment: SSHDeploymentConfig;
+    state: LocalStateConfig;
+  };
   server: {
     host: string;
     baseFolder: string;

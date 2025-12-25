@@ -1,17 +1,17 @@
 import chalk from "chalk";
+import { createDeploymentBackend } from "../backends/deployment/index.js";
 import { loadConfig } from "../utils/config.js";
 import { log, spinner } from "../utils/logger.js";
-import { SSHClient } from "../utils/ssh.js";
 
-export async function versionsCommand(): Promise<void> {
+export const versionsCommand = async (): Promise<void> => {
   const config = await loadConfig();
-  const ssh = new SSHClient(config);
+  const backend = createDeploymentBackend(config);
 
   const spin = spinner("Fetching versions...");
   try {
-    await ssh.connect();
-    const versions = await ssh.listVersions();
-    await ssh.disconnect();
+    await backend.connect();
+    const versions = await backend.listVersions();
+    await backend.disconnect();
     spin.stop();
 
     if (versions.length === 0) {
@@ -34,21 +34,21 @@ export async function versionsCommand(): Promise<void> {
     log.error(err instanceof Error ? err.message : String(err));
     process.exit(1);
   }
-}
+};
 
-export async function rollbackCommand(version: string): Promise<void> {
+export const rollbackCommand = async (version: string): Promise<void> => {
   const config = await loadConfig();
-  const ssh = new SSHClient(config);
+  const backend = createDeploymentBackend(config);
 
   const spin = spinner(`Rolling back to ${version}...`);
   try {
-    await ssh.connect();
-    await ssh.rollback(version);
-    await ssh.disconnect();
+    await backend.connect();
+    await backend.rollback(version);
+    await backend.disconnect();
     spin.succeed(`Rolled back to ${version}`);
   } catch (err) {
     spin.fail("Rollback failed");
     log.error(err instanceof Error ? err.message : String(err));
     process.exit(1);
   }
-}
+};
