@@ -29,9 +29,13 @@ export const validateCommand = async (): Promise<void> => {
 
   // 2. Attempt SSH connection
   try {
-    await backend.connect();
-    console.log(`${chalk.green("✓")} SSH connection: ${config.server.host}`);
-    await backend.disconnect();
+    const isValid = await backend.validate();
+    if (isValid) {
+      console.log(`${chalk.green("✓")} SSH connection: ${config.server.host}`);
+    } else {
+      console.log(`${chalk.red("✗")} SSH connection: ${config.server.host}`);
+      allValid = false;
+    }
   } catch {
     console.log(`${chalk.red("✗")} SSH connection: ${config.server.host}`);
     allValid = false;
@@ -40,9 +44,7 @@ export const validateCommand = async (): Promise<void> => {
   // 3. Check base folder on server
   const baseFolder = config.server.baseFolder;
   try {
-    await backend.connect();
     const exists = await backend.checkDirectoryExists(baseFolder);
-    await backend.disconnect();
     if (exists) {
       console.log(`${chalk.green("✓")} Base folder: ${baseFolder}`);
     } else {
@@ -54,11 +56,11 @@ export const validateCommand = async (): Promise<void> => {
     allValid = false;
   }
 
-  // 4. Check dist folder locally
-  if (existsSync(config.app.distFolder)) {
-    console.log(`${chalk.green("✓")} Dist folder: ${config.app.distFolder}`);
+  // 4. Check path locally
+  if (existsSync(config.app.path)) {
+    console.log(`${chalk.green("✓")} Path: ${config.app.path}`);
   } else {
-    console.log(`${chalk.red("✗")} Dist folder: ${config.app.distFolder}`);
+    console.log(`${chalk.red("✗")} Path: ${config.app.path}`);
     allValid = false;
   }
 

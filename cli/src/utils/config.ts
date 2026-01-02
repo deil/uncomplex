@@ -40,7 +40,8 @@ const configSchema = z.object({
   }),
   app: z.object({
     name: z.string(),
-    distFolder: z.string(),
+    type: z.enum(["angular", "folder"]),
+    path: z.string(),
     uid: z.string(),
   }),
 });

@@ -6,11 +6,12 @@ import { log } from "../utils/logger.js";
 
 interface InitAnswers {
   app: string;
+  type: "angular" | "folder";
   server: string;
   user: string;
   baseFolder: string;
   sshConfig: string;
-  distFolder: string;
+  path: string;
 }
 
 export async function initCommand(): Promise<void> {
@@ -29,12 +30,26 @@ export async function initCommand(): Promise<void> {
     }
   }
 
-  const answers = await inquirer.prompt<InitAnswers>([
+  const basicAnswers = await inquirer.prompt<
+    Pick<
+      InitAnswers,
+      "app" | "type" | "server" | "user" | "baseFolder" | "sshConfig"
+    >
+  >([
     {
       type: "input",
       name: "app",
       message: "App name:",
       validate: (v) => !!v || "Required",
+    },
+    {
+      type: "list",
+      name: "type",
+      message: "App type:",
+      choices: [
+        { name: "Angular (uses dist/<name>/browser)", value: "angular" },
+        { name: "Folder (uses path directly)", value: "folder" },
+      ],
     },
     {
       type: "input",
@@ -55,13 +70,24 @@ export async function initCommand(): Promise<void> {
       message: "SSH config path:",
       default: "~/.ssh/config",
     },
+  ]);
+
+  const pathMessage =
+    basicAnswers.type === "angular"
+      ? "Angular app root folder:"
+      : "Path to deploy:";
+  const pathDefault = basicAnswers.type === "angular" ? "./" : "./dist";
+
+  const pathAnswer = await inquirer.prompt<Pick<InitAnswers, "path">>([
     {
       type: "input",
-      name: "distFolder",
-      message: "Local dist folder:",
-      default: "./dist",
+      name: "path",
+      message: pathMessage,
+      default: pathDefault,
     },
   ]);
+
+  const answers: InitAnswers = { ...basicAnswers, ...pathAnswer };
 
   const uid = randomUUID();
 
@@ -80,7 +106,8 @@ export async function initCommand(): Promise<void> {
     },
     app: {
       name: answers.app,
-      distFolder: answers.distFolder,
+      type: answers.type,
+      path: answers.path,
       uid,
     },
   };

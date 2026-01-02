@@ -1,11 +1,11 @@
 import type { DeployedVersion } from "../types.js";
 
 export interface DeploymentBackend {
-  connect(): Promise<void>;
-  disconnect(): Promise<void>;
-  deploy(versionTag: string): Promise<void>;
-  rollback(versionTag: string): Promise<void>;
-  listVersions(): Promise<DeployedVersion[]>;
+  validate(): Promise<boolean>;
+  deploy(sourcePath: string, destPath: string): Promise<void>;
+  switchVersion(versionTag: string, appName: string): Promise<void>;
+  rollback(versionTag: string, appName: string): Promise<void>;
+  listVersions(appName: string): Promise<DeployedVersion[]>;
   checkDirectoryExists(path: string): Promise<boolean>;
 }
 

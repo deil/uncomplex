@@ -7,24 +7,27 @@ export interface LocalStateConfig {
   path: string;
 }
 
+export interface ServerConfig {
+  host: string;
+  baseFolder: string;
+  ssh?: {
+    user?: string;
+    port?: number;
+    keys?: string[];
+    config?: string;
+  };
+}
+
 export interface Config {
   backends: {
     deployment: SSHDeploymentConfig;
     state: LocalStateConfig;
   };
-  server: {
-    host: string;
-    baseFolder: string;
-    ssh?: {
-      user?: string;
-      port?: number;
-      keys?: string[];
-      config?: string;
-    };
-  };
+  server: ServerConfig;
   app: {
     name: string;
-    distFolder: string;
+    type: "angular" | "folder";
+    path: string;
     uid: string;
   };
 }

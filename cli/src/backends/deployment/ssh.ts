@@ -1,26 +1,25 @@
 import { execSync } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { Config, DeployedVersion } from "../../types.js";
-import type { DeploymentBackend } from "../types.js";
+import type { DeployedVersion, ServerConfig } from "../../types.js";
 
 const expandPath = (p: string): string =>
   p.startsWith("~") ? join(homedir(), p.slice(1)) : p;
 
-export class SSHDeploymentBackend implements DeploymentBackend {
-  private config: Config;
+export class SshDeploymentBackend {
+  private server: ServerConfig;
 
-  constructor(config: Config) {
-    this.config = config;
+  constructor(server: ServerConfig) {
+    this.server = server;
   }
 
   private get user(): string {
-    return this.config.server.ssh?.user || "root";
+    return this.server.ssh?.user || "root";
   }
 
-  private buildSshArgs = (): string[] => {
+  private buildSshArgs(): string[] {
     const args: string[] = [];
-    const ssh = this.config.server.ssh;
+    const ssh = this.server.ssh;
 
     if (ssh?.port) {
       args.push("-p", String(ssh.port));
@@ -37,52 +36,50 @@ export class SSHDeploymentBackend implements DeploymentBackend {
     }
 
     return args;
-  };
+  }
 
-  private sshCmd = (cmd: string): string => {
+  private sshCmd(cmd: string): string {
     const args = this.buildSshArgs();
-    const target = `${this.user}@${this.config.server.host}`;
+    const target = `${this.user}@${this.server.host}`;
     return `ssh ${args.join(" ")} ${target} "${cmd.replace(/"/g, '\\"')}"`;
-  };
+  }
 
-  private exec = (cmd: string): string =>
-    execSync(cmd, { encoding: "utf-8" }).trim();
+  private exec(cmd: string): string {
+    return execSync(cmd, { encoding: "utf-8" }).trim();
+  }
 
-  private getAppPath = (): string => {
-    const base = this.config.server.baseFolder || "/var/www";
-    return `${base}/${this.config.app.name}`;
-  };
+  async validate(): Promise<boolean> {
+    try {
+      this.exec(this.sshCmd("echo ok"));
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
-  connect = async (): Promise<void> => {
-    this.exec(this.sshCmd("echo ok"));
-  };
-
-  disconnect = async (): Promise<void> => {
-    // No-op for native ssh
-  };
-
-  deploy = async (versionTag: string): Promise<void> => {
-    const appPath = this.getAppPath();
-    const versionPath = `${appPath}/${versionTag}`;
-
-    this.exec(this.sshCmd(`mkdir -p ${versionPath}`));
+  async deploy(sourcePath: string, destPath: string): Promise<void> {
+    this.exec(this.sshCmd(`mkdir -p ${destPath}`));
 
     const sshArgs = this.buildSshArgs();
     const rsyncSsh = sshArgs.length
       ? `-e "ssh ${sshArgs.join(" ")}"`
       : "-e ssh";
-    const rsyncCmd = `rsync -avz --delete ${rsyncSsh} ${this.config.app.distFolder}/ ${this.user}@${this.config.server.host}:${versionPath}/`;
-    execSync(rsyncCmd, { stdio: "inherit" });
 
+    const rsyncCmd = `rsync -avz --delete ${rsyncSsh} ${sourcePath}/ ${this.user}@${this.server.host}:${destPath}/`;
+    execSync(rsyncCmd, { stdio: "inherit" });
+  }
+
+  async switchVersion(versionTag: string, appName: string): Promise<void> {
+    const appPath = `${this.server.baseFolder}/${appName}`;
     this.exec(
       this.sshCmd(
         `cd ${appPath} && rm -f current && ln -s ${versionTag} current`,
       ),
     );
-  };
+  }
 
-  rollback = async (versionTag: string): Promise<void> => {
-    const appPath = this.getAppPath();
+  async rollback(versionTag: string, appName: string): Promise<void> {
+    const appPath = `${this.server.baseFolder}/${appName}`;
 
     try {
       this.exec(this.sshCmd(`test -d ${appPath}/${versionTag}`));
@@ -90,23 +87,17 @@ export class SSHDeploymentBackend implements DeploymentBackend {
       throw new Error(`Version ${versionTag} does not exist`);
     }
 
-    this.exec(
-      this.sshCmd(
-        `cd ${appPath} && rm -f current && ln -s ${versionTag} current`,
-      ),
-    );
-  };
+    this.switchVersion(versionTag, appName);
+  }
 
-  listVersions = async (): Promise<DeployedVersion[]> => {
-    const appPath = this.getAppPath();
+  async listVersions(appName: string): Promise<DeployedVersion[]> {
+    const appPath = `${this.server.baseFolder}/${appName}`;
 
     let currentVersion = "";
     try {
       const link = this.exec(this.sshCmd(`readlink ${appPath}/current`));
       currentVersion = link.split("/").pop() || link;
-    } catch {
-      // No current symlink
-    }
+    } catch {}
 
     let versions: DeployedVersion[] = [];
     try {
@@ -128,19 +119,17 @@ export class SSHDeploymentBackend implements DeploymentBackend {
             deployedAt: new Date(ts),
           };
         });
-    } catch {
-      // No versions
-    }
+    } catch {}
 
     return versions;
-  };
+  }
 
-  checkDirectoryExists = async (path: string): Promise<boolean> => {
+  async checkDirectoryExists(path: string): Promise<boolean> {
     try {
       this.exec(this.sshCmd(`test -d ${path}`));
       return true;
     } catch {
       return false;
     }
-  };
+  }
 }

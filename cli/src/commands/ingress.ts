@@ -88,7 +88,9 @@ export const ingressAddCommand = async (
     process.exit(1);
   }
   if (ingress.routes.some((r) => r.path === path && r.app === appUid)) {
-    console.log(`Route ${path} => ${app} already exists for ingress ${ingress.name}.`);
+    console.log(
+      `Route ${path} => ${app} already exists for ingress ${ingress.name}.`,
+    );
     process.exit(1);
   }
   ingress.routes.push({ uid: randomUUID(), path, app: appUid });

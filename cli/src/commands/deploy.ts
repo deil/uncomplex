@@ -1,28 +1,33 @@
+import { createComponentType } from "../backends/app/index.js";
 import { createDeploymentBackend } from "../backends/deployment/index.js";
 import { loadConfig } from "../utils/config.js";
-import { getVersionTag } from "../utils/git.js";
 import { log, spinner } from "../utils/logger.js";
+import { getNameFromPackageJson } from "../utils/npm-package.js";
 
 export const deployCommand = async (): Promise<void> => {
   const config = await loadConfig();
-  const versionTag = await getVersionTag();
 
-  log.info(`Deploying ${config.app.name} version ${versionTag}`);
+  const componentType = createComponentType(config);
+  const deploymentBackend = createDeploymentBackend(config);
 
-  const backend = createDeploymentBackend(config);
+  const artifactId = await componentType.getArtifactId();
 
-  const spin = spinner("Connecting to server...");
+  log.info(`Deploying ${config.app.name} version ${artifactId}`);
+
+  const sourcePath =
+    config.app.type === "angular"
+      ? `${config.app.path}/dist/${await getNameFromPackageJson(config.app.path)}/browser`
+      : config.app.path;
+
+  log.info(`Source: ${sourcePath}`);
+
+  const spin = spinner("Deploying files...");
   try {
-    await backend.connect();
-    spin.succeed("Connected");
-
-    const deploySpin = spinner("Deploying files...");
-    await backend.deploy(versionTag);
-    deploySpin.succeed("Files deployed");
-
-    await backend.disconnect();
-
-    log.success(`Deployed ${versionTag} to ${config.server.host}`);
+    const destPath = `${config.server.baseFolder}/${config.app.name}/${artifactId}`;
+    await deploymentBackend.deploy(sourcePath, destPath);
+    await deploymentBackend.switchVersion(artifactId, config.app.name);
+    spin.succeed("Files deployed");
+    log.success(`Deployed ${artifactId} to ${config.server.host}`);
   } catch (err) {
     spin.fail("Deployment failed");
     log.error(err instanceof Error ? err.message : String(err));

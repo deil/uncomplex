@@ -10,15 +10,18 @@ import {
   ingressShowCommand,
 } from "./commands/ingress.js";
 import { initCommand } from "./commands/init.js";
-import { rollbackCommand, versionsCommand } from "./commands/versions.js";
 import { validateCommand } from "./commands/validate.js";
+import { rollbackCommand, versionsCommand } from "./commands/versions.js";
 import { setConfigPath } from "./utils/config.js";
 
 program
   .name("un")
   .description("Deploy Angular apps to remote servers")
   .version("0.0.1")
-  .option("-c, --config <path>", "Path to config file (default: un.config.json)")
+  .option(
+    "-c, --config <path>",
+    "Path to config file (default: un.config.json)",
+  )
   .hook("preAction", () => {
     const opts = program.opts();
     if (opts.config) {

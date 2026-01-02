@@ -9,9 +9,7 @@ export const versionsCommand = async (): Promise<void> => {
 
   const spin = spinner("Fetching versions...");
   try {
-    await backend.connect();
-    const versions = await backend.listVersions();
-    await backend.disconnect();
+    const versions = await backend.listVersions(config.app.name);
     spin.stop();
 
     if (versions.length === 0) {
@@ -19,7 +17,7 @@ export const versionsCommand = async (): Promise<void> => {
       return;
     }
 
-    console.log(`\nDeployed versions on ${config.server.host}:\n`);
+    console.log(`\nDeployed versions:\n`);
     for (const v of versions) {
       const date = v.deployedAt.toLocaleString();
       if (v.isCurrent) {
@@ -42,9 +40,7 @@ export const rollbackCommand = async (version: string): Promise<void> => {
 
   const spin = spinner(`Rolling back to ${version}...`);
   try {
-    await backend.connect();
-    await backend.rollback(version);
-    await backend.disconnect();
+    await backend.rollback(version, config.app.name);
     spin.succeed(`Rolled back to ${version}`);
   } catch (err) {
     spin.fail("Rollback failed");
